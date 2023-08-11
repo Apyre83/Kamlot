@@ -1,7 +1,7 @@
 UP = "\033[A"
 CLEAR = "\033[K"
 
-MY_SOURCES =	main.cpp
+MY_SOURCES =	main.cpp	Ball.cpp
 
 MY_OBJECTS =  $(MY_SOURCES:.cpp=.o)
 
