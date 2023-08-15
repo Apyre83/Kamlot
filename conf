@@ -1,3 +1,4 @@
-rectangle 10 300 300 10 20 255 0 255
-rectangle 350 400 500 10 -20 255 255 0
+# x y width height rotation r g b;
+rectangle 100 500 800 10 10 0 255 0
+rectangle 1000 500 800 10 -10 255 0 0
 
