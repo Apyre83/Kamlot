@@ -32,7 +32,6 @@ std::vector<sf::RectangleShape> parseConfFile(const std::string& file) {
 }
 
 void initializeGame(sf::RenderWindow& window, std::vector<sf::RectangleShape>& obstacles, std::vector<Ball>& balls, std::mt19937& gen) {
-    obstacles = parseConfFile("conf");
     float x = window.getSize().x / 2.0f;
     float y = window.getSize().y / 2.0f;
 
@@ -53,12 +52,19 @@ int main(void) {
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     sf::RenderWindow window(desktop, "Kamlot", sf::Style::Fullscreen);
 
-    std::vector<sf::RectangleShape> obstacles;
+    std::vector<sf::RectangleShape> obstacles = parseConfFile("conf");
     std::vector<Ball> balls;
 
     initializeGame(window, obstacles, balls, gen);
 
     sf::Clock clock;
+
+	bool isDrawing = false;
+	sf::Vector2i startPosition;
+	const float RECTANGLE_WIDTH = 15.0f;  // Vous pouvez ajuster cette valeur selon vos besoins.
+	
+	bool	isPaused = false;
+
 
     while (window.isOpen()) {
         sf::Event event;
@@ -68,11 +74,56 @@ int main(void) {
                 window.close();
             }
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
-                initializeGame(window, obstacles, balls, gen);
+                isPaused = false;
+				initializeGame(window, obstacles, balls, gen);
             }
+			if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+				startPosition = sf::Mouse::getPosition(window);
+				isDrawing = true;
+			}
+			if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+				isDrawing = false;
+				sf::Vector2i endPosition = sf::Mouse::getPosition(window);
+
+				float dx = static_cast<float>(endPosition.x - startPosition.x);
+				float dy = static_cast<float>(endPosition.y - startPosition.y);
+				float length = std::sqrt(dx * dx + dy * dy);
+				float rotation = std::atan2(dy, dx) * 180.0f / 3.14159265f;  // Convertir en degrés
+
+				sf::RectangleShape rectangle;
+				rectangle.setPosition(static_cast<float>(startPosition.x), static_cast<float>(startPosition.y));
+				rectangle.setSize(sf::Vector2f(length, RECTANGLE_WIDTH));
+				rectangle.setOrigin(0, RECTANGLE_WIDTH / 2); // Centrer la rotation autour du milieu du rectangle
+				rectangle.setRotation(rotation);
+				rectangle.setFillColor(sf::Color::Blue);
+
+				obstacles.push_back(rectangle);
+			}
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D) {
+				obstacles.clear();
+			}
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
+				isPaused = !isPaused;
+			}
+
         }
 
+		if (isDrawing) {
+			sf::RectangleShape tempRectangle;
+			tempRectangle.setPosition(static_cast<float>(startPosition.x), static_cast<float>(startPosition.y));
+			sf::Vector2i currentMousePosition = sf::Mouse::getPosition(window);
+			tempRectangle.setSize(sf::Vector2f(static_cast<float>(currentMousePosition.x - startPosition.x), static_cast<float>(currentMousePosition.y - startPosition.y)));
+			tempRectangle.setFillColor(sf::Color(100, 100, 100, 100));
+			window.draw(tempRectangle);
+		}
+
+
+
         float dt = clock.restart().asSeconds();
+
+		if (isPaused) {
+			continue;
+		}
 
         for (auto& ball : balls) {
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
